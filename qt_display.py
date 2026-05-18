@@ -24,7 +24,8 @@ class QtWindow(QtWidgets.QMainWindow):
     mouse_event = QtCore.pyqtSignal(int, int, int)
 
     def __init__(self, title="Window", size=(1280, 720), auto_resize=True):
-        """Qt 窗口封装，用于替代 OpenCV 的窗口接口。
+        """
+        Qt 窗口封装，用于替代 OpenCV 的窗口接口。
 
         参数:
         - title: 窗口标题
@@ -56,7 +57,8 @@ class QtWindow(QtWidgets.QMainWindow):
         self.show()
 
     def imshow(self, img_bgr):
-        """在窗口中显示一张 BGR 图像。
+        """
+        在窗口中显示一张 BGR 图像。
 
         步骤：
         1. 将 OpenCV 的 BGR 数据转换为 Qt 可用的 QImage(RGB 或灰度)。
@@ -69,46 +71,52 @@ class QtWindow(QtWidgets.QMainWindow):
         """
         if img_bgr is None:
             return
-        # BGR -> RGB
-        if len(img_bgr.shape) == 3:
-            img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
-        else:
-            img_rgb = img_bgr
-        h, w = img_rgb.shape[:2]
-        if len(img_rgb.shape) == 3:
-            ch = img_rgb.shape[2]
-            # QImage 需要每行的字节数（channels * width）
-            bytes_per_line = ch * w
-            qt_img = QtGui.QImage(img_rgb.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
-        else:
-            qt_img = QtGui.QImage(img_rgb.data, w, h, QtGui.QImage.Format_Grayscale8)
-        pixmap = QtGui.QPixmap.fromImage(qt_img)
+        # 输入为 3 通道 RGB：
+        # 若输入为 BGR 彩色图像，转换为 RGB
+        if img_bgr is None: # 输入图像无效时直接返回，避免后续处理错误
+            return
 
-        # 限制最大显示尺寸为屏幕可用区域，避免窗口超出屏幕
+        img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)  # 转换为RGB
+        h, w = img_rgb.shape[:2]
+
+        # RGB三通道构造 QImage
+        ch = 3  
+        bytes_per_line = ch * w # 每行字节数
+        qt_img = QtGui.QImage(img_rgb.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)   # 构造 QImage
+        pixmap = QtGui.QPixmap.fromImage(qt_img)    # 转为 QPixmap 以供 QLabel 显示
+
+        # 限制最大显示尺寸为屏幕可用区域，避免窗口超出屏幕(一般不会超过)
         try:
-            screen_geom = self.app.primaryScreen().availableGeometry()
+            screen_geom = self.app.primaryScreen().availableGeometry()  # 获取屏幕可用区域
             max_w = max(100, screen_geom.width() - 100)
             max_h = max(100, screen_geom.height() - 100)
         except Exception:
-            max_w, max_h = 1920, 1080
+            max_w, max_h = 1920, 1080   #本人的屏幕分辨率。可修改
 
-        display_pixmap = pixmap
-        if pixmap.width() > max_w or pixmap.height() > max_h:
+        display_pixmap = pixmap # 默认显示原始尺寸的 pixmap
+        if pixmap.width() > max_w or pixmap.height() > max_h:   # 超出最大尺寸则等比缩放
             display_pixmap = pixmap.scaled(max_w, max_h, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
 
-        if getattr(self, 'auto_resize', True):
+        if getattr(self, 'auto_resize', True):  # 启用自动调整窗口大小以适应图像
             # 让 QLabel 固定为图像尺寸，然后调整窗口以贴合内容
-            self.image_label.setFixedSize(display_pixmap.size())
-            self.image_label.setPixmap(display_pixmap)
+            self.image_label.setFixedSize(display_pixmap.size())    # 设置 QLabel 大小为 pixmap 尺寸
+            self.image_label.setPixmap(display_pixmap)  # 显示图像
             # 调整主窗口尺寸以适应内容（包含布局边距）
             self.adjustSize()
-            # 固定窗口大小，禁止用户手动拖动改变窗口尺寸
+            # 固定窗口大小，禁止用户手动拖动改变窗口尺寸。
             self.setFixedSize(self.size())
         else:
             # 保持之前逻辑：将图像缩放到标签大小
             scaled_pixmap = display_pixmap.scaled(self.image_label.size(), QtCore.Qt.KeepAspectRatio,
-                                                  QtCore.Qt.SmoothTransformation)
+                                                  QtCore.Qt.SmoothTransformation)   # 根据 QLabel 当前尺寸缩放显示
             self.image_label.setPixmap(scaled_pixmap)
+        # 记录原始图像尺寸与用于显示的 pixmap 尺寸，供坐标映射使用
+        try:
+            self._orig_img_size = (w, h)    
+            self._display_pixmap_size = (display_pixmap.width(), display_pixmap.height())   
+        except Exception:
+            self._orig_img_size = None
+            self._display_pixmap_size = None
 
     def keyPressEvent(self, event):
         key = event.key()
@@ -142,19 +150,31 @@ class QtWindow(QtWidgets.QMainWindow):
         return key
 
     def mousePressEvent(self, event):
-        x, y = self._map_to_image_coords(event.pos())
-        self.mouse_event.emit(0, x, y)
+        x, y = self._map_to_image_coords(event.pos())   # 将 Qt 坐标映射回图像像素坐标
+        # 使用 OpenCV 的鼠标事件常量
+        try:
+            self.mouse_event.emit(cv2.EVENT_LBUTTONDOWN, x, y)
+        except Exception:
+            # 回退到原来的数值（0）以防未导入 cv2
+            self.mouse_event.emit(0, x, y)
 
     def mouseMoveEvent(self, event):
         x, y = self._map_to_image_coords(event.pos())
-        self.mouse_event.emit(1, x, y)
+        try:
+            self.mouse_event.emit(cv2.EVENT_MOUSEMOVE, x, y)
+        except Exception:
+            self.mouse_event.emit(1, x, y)
 
     def mouseReleaseEvent(self, event):
         x, y = self._map_to_image_coords(event.pos())
-        self.mouse_event.emit(2, x, y)
+        try:
+            self.mouse_event.emit(cv2.EVENT_LBUTTONUP, x, y)
+        except Exception:
+            self.mouse_event.emit(2, x, y)
 
     def _map_to_image_coords(self, qt_pos):
-        """将 QLabel 中的 Qt 坐标映射回图片像素坐标。
+        """
+        将 QLabel 中的 Qt 坐标映射回图片像素坐标。
 
         说明：当 QLabel 中的 pixmap 比 label 小（由于保持纵横比居中显示），
         需要计算偏移量和缩放因子后将窗口坐标映射为图像像素坐标。
@@ -163,16 +183,27 @@ class QtWindow(QtWidgets.QMainWindow):
         if self.image_label.pixmap() is None:
             return -1, -1
         label_rect = self.image_label.rect()
-        pix_rect = self.image_label.pixmap().rect()
-        # 计算像素缩放因子（注意是 pixmap 相对 label 的比例）
-        scale_x = pix_rect.width() / max(label_rect.width(), 1)
-        scale_y = pix_rect.height() / max(label_rect.height(), 1)
-        # 计算居中显示时的偏移
+        pixmap = self.image_label.pixmap()
+        if pixmap is None:
+            return -1, -1
+        pix_rect = pixmap.rect()
+        # 计算居中显示时的偏移（label 可能包含比 pixmap 更大的区域）
         x_offset = (label_rect.width() - pix_rect.width()) // 2
         y_offset = (label_rect.height() - pix_rect.height()) // 2
-        img_x = int((qt_pos.x() - x_offset) / scale_x) if scale_x != 0 else -1
-        img_y = int((qt_pos.y() - y_offset) / scale_y) if scale_y != 0 else -1
-        return img_x, img_y
+        # 计算相对 pixmap 的坐标（允许超出边界，返回可能为负或大于尺寸的值）
+        px = qt_pos.x() - x_offset
+        py = qt_pos.y() - y_offset
+        # 将 pixmap 坐标映射回原始图像像素坐标
+        try:
+            orig_w, orig_h = self._orig_img_size
+            pw = pix_rect.width() if pix_rect.width() != 0 else 1
+            ph = pix_rect.height() if pix_rect.height() != 0 else 1
+            img_x = px * orig_w / pw
+            img_y = py * orig_h / ph
+            return int(img_x), int(img_y)
+        except Exception:
+            # 无法获得原始尺寸时直接返回像素坐标（可能超出 label 范围）
+            return int(px), int(py)
 
 def imshow(winname, img):
     if winname not in _windows:
