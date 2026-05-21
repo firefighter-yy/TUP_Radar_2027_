@@ -472,6 +472,32 @@ def video_capture_get():
             time.sleep(0.016)  # 60fps
 
 
+def test_video_get(path):
+    global camera_image, test_paused
+    cap = cv2.VideoCapture(path)
+    if not cap.isOpened():
+        print(f"无法打开测试视频: {path}")
+        return
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    try:
+        fps = float(fps) if fps and fps > 0 else 25.0
+    except Exception:
+        fps = 25.0
+    delay = 1.0 / fps
+    while True:
+        # 暂停时不读取新帧，仅短暂等待
+        if test_paused:
+            time.sleep(0.05)
+            continue
+        ret, frame = cap.read()
+        if not ret:
+            # 读到末尾则回到开头循环播放
+            cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            continue
+        camera_image = frame
+        time.sleep(delay)
+
+
 # 串口发送线程
 def ser_send():
     if not ser1:  # 检查串口是否可用
@@ -821,9 +847,29 @@ else:
     print("跳过串口发送线程初始化")
 
 camera_image = None
+test_paused = False  # test 模式下按空格暂停/继续标志
 
 if camera_mode == 'test':
-    camera_image = cv2.imread(config['paths']['test_img'])
+    # 根据 config 中的 test.video / test.img 开关选择输入源
+    test_cfg = config.get('test', {})
+    use_img = bool(test_cfg.get('img', False))
+    use_video = bool(test_cfg.get('video', False))
+    if use_img:
+        # 使用图片
+        img_path = config['paths'].get('test_img')
+        if img_path:
+            img = cv2.imread(img_path)
+            if img is None:
+                print(f"无法打开测试图片: {img_path}")
+            else:
+                camera_image = img
+        else:
+            print("config 中未配置 paths.test_img")
+    elif use_video:
+        thread_camera = threading.Thread(target=test_video_get, args=(config['paths']['test_video'],), daemon=True)
+        thread_camera.start()
+    else:
+        print('test 模式下未启用 video 或 img,请在 config.yaml 中设置 test.video 或 test.img')
 elif camera_mode == 'hik':
     # 海康相机图像获取线程
     thread_camera = threading.Thread(target=hik_camera_get, daemon=True)
@@ -999,3 +1045,11 @@ while True:
         cv2.imwrite(img_name1, map_show)
         cv2.imwrite(img_name2, img0)
     key = cv2.waitKey(1)
+    
+    # test 模式：按空格切换暂停/继续
+    try:
+        if camera_mode == 'test' and (key & 0xFF) == ord(' '):
+            test_paused = not test_paused
+            print('测试视频已暂停' if test_paused else '测试视频已继续')
+    except Exception:
+        pass
