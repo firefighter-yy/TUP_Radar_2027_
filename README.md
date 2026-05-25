@@ -17,6 +17,7 @@
 
 1.  **技术栈现代化**：将推理框架升级至 **PyTorch 2.11** 并同步更新核心依赖。通过现代化的工具链，充分释放新硬件性能，降低长期维护风险，并为后续的模型量化与部署优化奠定基础。
 2.  **多相机兼容**：在保留对厦门理工推荐相机（MV-CS060-10UC-Pro）支持的基础上，新增了对 **MV-CU013-A0UC** 等相机的适配与测试。
+3.  **视频测试**：在增加测试视频功能，便于提前测试实际使用的帧率或显存占用，方便后续开发。(目前不建议在测试视频中测试坐标变换,除非标定的图片为相机取流的图片)
 
 
 ##  功能特性
@@ -61,7 +62,7 @@
 | Web 调试 | Flask 3.1.3 |
 
 ### 依赖列表
-建议使用MiniConda管理环境，避免冲突(需自己下载)
+建议使用MiniConda管理环境，避免环境冲突(需自己下载)
 
 建立并激活Conda环境
 ```bash
@@ -108,7 +109,7 @@ python export.py --weights models/armor.pt --include engine --device 0 --half
 ```
 - 如果engine转换失败，可以使用`polygraphy`
 ```
-pip install polygraphy
+pip install polygraphy # 这里转换精度为fp16
 polygraphy convert models/car.onnx --fp16 --output models/car.engine
 polygraphy convert models/armor.onnx --fp16 --output models/armor.engine
 ```
@@ -199,6 +200,10 @@ polygraphy convert models/armor.onnx --fp16 --output models/armor.engine
     |   |   __init__.py
     |   |
     |   |
+    |   +---test
+    |   |   _.txt
+    |   |
+    |   |   
     |   +---segment
     |   |   |   augmentations.py
     |   |   |   dataloaders.py
@@ -233,7 +238,7 @@ polygraphy convert models/armor.onnx --fp16 --output models/armor.engine
     - A：调小`Gain`或注释`Gain`使用默认增益；不同相机Gain的阈值会有出入
 
 2. Q：海康相机无法取流（始终打印“等待图像。。。”）
-    - A：先查看相机像素格式，再修改`hik_camer.py`，添加新的`Bayerxx`格式分支
+    - A：先查看相机像素格式，再修改`hik_camer.py`，添加新的`Bayerxx`格式分支（可能还会有其他原因，本人还没遇见 O_O）
 
 3. Q： 使用 TensorRT 10.x 加载 `.engine` 文件时报错 `AttributeError: 'ICudaEngine' object has no attribute 'num_bindings'` 怎么办？
     - 这是因为原项目中的 `common.py` 代码基于 TensorRT 7-8 的旧 API 编写，而 TensorRT 10.x 移除了 `num_bindings`、`get_binding_name` 等接口，改用 `num_io_tensors`、`get_tensor_name` 等新 API。
@@ -252,4 +257,5 @@ polygraphy convert models/armor.onnx --fp16 --output models/armor.engine
 
 # 联系我们
 QQ: 2416411358
+
 E-mail: yangyulun123@126.com
