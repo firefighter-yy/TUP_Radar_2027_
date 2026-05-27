@@ -230,6 +230,7 @@ polygraphy convert models/armor.onnx --fp16 --output models/armor.engine
 > 详细算法原理请参考[厦门理工大学（厦理）PFA 战队原开源项目](https://github.com/Y-Tomorrow/PFA_radar-2025.git)。
 
 # 开发日志
+- Data:2026.5.25：完成所有功能测试，发布V1.0.0版本
 - Data:2026.5.14：完成TensorRT10.16.1推理加速构建
 - Data:2026.5.10：完成代码迁移更新，基础功能通过测试并优化代码逻辑
 
