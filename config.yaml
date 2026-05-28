@@ -20,7 +20,7 @@ filter:
     max_inactive_time: 2.0
 
 paths:
-  test_img: 'test/xxx' # 测试图片
+  test_img: 'test/video_image.jpg' # 测试图片
   test_video: 'test/xxx' # 测试视频
   calibration:
     red: 'arrays_test_red.npy' # 加载标定好的仿射变换矩阵
