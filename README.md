@@ -9,6 +9,20 @@
 
 </div>
 
+# 目录
+- [项目介绍](#项目介绍)
+- [功能](#功能特性)
+- [系统架构](#️-系统架构)
+- [软件架构](#️-软件架构)
+- [环境依赖与运行](#环境依赖与运行)
+- [使用](#如何使用)
+- [文件结构](#文件结构)
+- [算法简述](#算法原理简述)
+- [开发日志](#开发日志)
+- [一些问题](#qa)
+- [致谢](#-致谢)
+- [联系我们](#联系我们)
+
 ##  项目简介
 
 本项目是 **TUP 战队** 为 RoboMaster 竞赛开发的雷达站系统，代码基于 **厦门理工学院（厦理）PFA 战队** 的开源雷达方案进行二次开发，延续了其“纯单目相机”的低成本技术路线。
@@ -68,7 +82,6 @@
 ```bash
 conda create -n radar python=3.10
 conda activate radar
-pip install -r requirements.txt
 ```
 完整依赖
 ```bash
@@ -99,9 +112,10 @@ PyQt5
 python export.py --weights models/armor.pt --include onnx --opset 12 --simplify
 python export.py --weights models/car.pt --include onnx --opset 12 --simplify
 ```
-将 .onnx 转成 .engine
+*将 .onnx 转成 .engine*
+
 Linux：
-使用onnx2engine.py
+使用`onnx2engine.py`
 或者使用
 ```
 python export.py --weights models/car.pt --include engine --device 0 --half
@@ -124,6 +138,28 @@ polygraphy convert models/armor.onnx --fp16 --output models/armor.engine
 >    注意：注意导出engine文件的精度是否与推理精度匹配。
 
 
+## 如何使用
+### 比赛：
+1. 修改队伍阵营
+2. 标定（运行`calibration.py`）
+3. 更改串口名(config.yaml)
+4. 修改运行模式---'test':测试模式,'hik':海康相机,'video':USB相机（videocapture）（config.yaml） 
+5. 运行`main.py`
+6. 在云台手端，切换飞镖锁定目标触发双倍易伤
+
+### 测试：
+- 若为图片测试：
+    1. 修改`config.yaml`中`test`部分
+    2. 将测试图片放在test文件夹中，并修改图片名称为*video_image.jpg*
+    3. 之后即可运行标定或主程序
+
+- 若为视频测试：
+    1. 将视频放在test文件夹中，修改`config.yaml`中`paths`[test_video]的文件名称
+    2. 执行`get_picture.py`，得到相机取流得到的图片
+    3. 运行`calibration.py`进行标定
+    4. 运行`main.py`
+
+
 ## 文件结构
 ```bash
 \---TUP_Radar
@@ -133,6 +169,7 @@ polygraphy convert models/armor.onnx --fp16 --output models/armor.engine
     |   config.yaml # 配置修改
     |   detect_function.py # 目标检测代码封装
     |   export.py # 模型类型转换代码
+    |   get_picture.py # 测试视频取图
     |   hik_camera.py # 海康相机支持代码
     |   information_ui.py # 裁判系统消息显示UI
     |   LICENSE # 开源许可
@@ -144,18 +181,14 @@ polygraphy convert models/armor.onnx --fp16 --output models/armor.engine
     |
     +---docs # 需求图片文件夹
     |       img.png
-    |       map.jpg # 地图图片
-    |       map_blue.jpg # 蓝方视角地图
-    |       map_mask.jpg # 地图掩码（用于透视变换高度选择）
-    |       map_red.jpg # 红方视角地图
-    |       map_red_s_mask.jpg
-    |       test_image.jpg # 测试鸟瞰图
+    |       system.png # 软件架构
+    |       system1.png # 系统架构
     |
     +---images-2027 # 需求图片文件夹
     |       map.jpg # 地图
-    |       map_blue.jpg
+    |       map_blue.jpg # 蓝方地图
     |       map_mask.jpg # 掩码地图
-    |       map_red.jpg
+    |       map_red.jpg # 红方地图
     +---models
     |   |   armor.onnx # 装甲板识别模型
     |   |   armor.pt
@@ -181,7 +214,12 @@ polygraphy convert models/armor.onnx --fp16 --output models/armor.engine
     |   |   example_receive.py # 接收示例代码
     |   |   example_send.py # 发送示例代码
     |   |   ser_api.py # 裁判系统通信代码函数封装
-    |   |
+    |
+    |
+    +---test # 测试区域
+    |   _.txt
+    |   test_image.jpg # 测试图片
+    |
     |
     +---utils # YOLOv5目标检测工具包
     |   |   activations.py
@@ -198,10 +236,6 @@ polygraphy convert models/armor.onnx --fp16 --output models/armor.engine
     |   |   torch_utils.py
     |   |   triton.py
     |   |   __init__.py
-    |   |
-    |   |
-    |   +---test # 测试区域
-    |   |   _.txt
     |   |
     |   |   
     |   +---segment
@@ -252,6 +286,14 @@ polygraphy convert models/armor.onnx --fp16 --output models/armor.engine
 4. Q： 运行 `calibration.py` 或 `main.py` 时出现 `qt.qpa.plugin: Could not load the Qt platform plugin "xcb"` 或 `QWidget: Must construct a QApplication before a QWidget` 错误，怎么办？
     - A：这是由于 `opencv-python` 与 `PyQt5` 各自捆绑了不同版本的 Qt 库，导致插件冲突；同时 `cv2.imshow` 等 OpenCV GUI 函数与 PyQt5 的事件循环不兼容。
     - **解决办法**：移除标准OpenCV，安装无头版本（避免Qt后端冲突），使用PyQt5重新实现OpenCV的GUI函数。(已解决，可更改`qt_display.py`更改GUI)
+
+5. Q： 对于使用Qt库实现`make_mask.py`，如果保存掩码全黑怎么办？
+    - A： 这是因为`qt_display.py`发出的鼠标事件与`make_mask.py`中判断OpenCV常量不一致，导致`fillPoly`未被调用
+    - **解决办法**：修改`qt_display.py`中的鼠标事件。
+
+6. Q： polylines/fillPoly为什么会无效或出现异常？
+    - A： 传入点数组 dtype不符合OpenCV的要求(比如非整型)
+    - **解决办法**：在`make_mask.py`将点数组显示转换为`np.int32`并传入
 
 
 # 🤝 致谢
