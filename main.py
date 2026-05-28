@@ -856,7 +856,7 @@ if camera_mode == 'test':
     use_video = bool(test_cfg.get('video', False))
     if use_img:
         # 使用图片
-        img_path = config['paths'].get('test_img')
+        img_path = config['paths']['test_img']
         if img_path:
             img = cv2.imread(img_path)
             if img is None:

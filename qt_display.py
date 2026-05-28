@@ -1,4 +1,3 @@
-# qt_display.py
 import sys
 import cv2
 import numpy as np
@@ -71,10 +70,6 @@ class QtWindow(QtWidgets.QMainWindow):
         """
         if img_bgr is None:
             return
-        # 输入为 3 通道 RGB：
-        # 若输入为 BGR 彩色图像，转换为 RGB
-        if img_bgr is None: # 输入图像无效时直接返回，避免后续处理错误
-            return
 
         img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)  # 转换为RGB
         h, w = img_rgb.shape[:2]
@@ -111,12 +106,8 @@ class QtWindow(QtWidgets.QMainWindow):
                                                   QtCore.Qt.SmoothTransformation)   # 根据 QLabel 当前尺寸缩放显示
             self.image_label.setPixmap(scaled_pixmap)
         # 记录原始图像尺寸与用于显示的 pixmap 尺寸，供坐标映射使用
-        try:
-            self._orig_img_size = (w, h)    
-            self._display_pixmap_size = (display_pixmap.width(), display_pixmap.height())   
-        except Exception:
-            self._orig_img_size = None
-            self._display_pixmap_size = None
+        self._orig_img_size = (w, h)
+        self._display_pixmap_size = (display_pixmap.width(), display_pixmap.height())
 
     def keyPressEvent(self, event):
         key = event.key()
@@ -194,16 +185,13 @@ class QtWindow(QtWidgets.QMainWindow):
         px = qt_pos.x() - x_offset
         py = qt_pos.y() - y_offset
         # 将 pixmap 坐标映射回原始图像像素坐标
-        try:
-            orig_w, orig_h = self._orig_img_size
-            pw = pix_rect.width() if pix_rect.width() != 0 else 1
-            ph = pix_rect.height() if pix_rect.height() != 0 else 1
-            img_x = px * orig_w / pw
-            img_y = py * orig_h / ph
-            return int(img_x), int(img_y)
-        except Exception:
-            # 无法获得原始尺寸时直接返回像素坐标（可能超出 label 范围）
-            return int(px), int(py)
+        orig_w, orig_h = self._orig_img_size
+        pw = pix_rect.width() or 1
+        ph = pix_rect.height() or 1
+        img_x = px * orig_w / pw
+        img_y = py * orig_h / ph
+        return int(img_x), int(img_y)
+
 
 def imshow(winname, img):
     if winname not in _windows:
