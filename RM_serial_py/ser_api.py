@@ -104,44 +104,48 @@ def build_data_radar(target_robot_id, target_position_x, target_position_y):
 
 # 雷达数据部分构建示例
 def build_data_radar_all(send_map,state):
-    if state == 'R':
-        data = bytearray()
-        data.extend(bytearray(struct.pack('H', int(send_map['B1'][0]))))  # x坐标 (小端)
-        data.extend(bytearray(struct.pack('H', int(send_map['B1'][1]))))  # y坐标 (小端)
+    data = bytearray()
+    data.extend(bytearray(struct.pack('H', int(send_map['B1'][0]))))  # x坐标 (小端)
+    data.extend(bytearray(struct.pack('H', int(send_map['B1'][1]))))  # y坐标 (小端)
 
-        data.extend(bytearray(struct.pack('H', int(send_map['B2'][0]))))  # x坐标 (小端)
-        data.extend(bytearray(struct.pack('H', int(send_map['B2'][1]))))  # y坐标 (小端)
+    data.extend(bytearray(struct.pack('H', int(send_map['B2'][0]))))  # x坐标 (小端)
+    data.extend(bytearray(struct.pack('H', int(send_map['B2'][1]))))  # y坐标 (小端)
 
-        data.extend(bytearray(struct.pack('H', int(send_map['B3'][0]))))  # x坐标 (小端)
-        data.extend(bytearray(struct.pack('H', int(send_map['B3'][1]))))  # y坐标 (小端)
+    data.extend(bytearray(struct.pack('H', int(send_map['B3'][0]))))  # x坐标 (小端)
+    data.extend(bytearray(struct.pack('H', int(send_map['B3'][1]))))  # y坐标 (小端)
 
-        data.extend(bytearray(struct.pack('H', int(send_map['B4'][0]))))  # x坐标 (小端)
-        data.extend(bytearray(struct.pack('H', int(send_map['B4'][1]))))  # y坐标 (小端)
+    data.extend(bytearray(struct.pack('H', int(send_map['B4'][0]))))  # x坐标 (小端)
+    data.extend(bytearray(struct.pack('H', int(send_map['B4'][1]))))  # y坐标 (小端)
 
-        data.extend(bytearray(struct.pack('H', int(send_map['B5'][0]))))  # x坐标 (小端)
-        data.extend(bytearray(struct.pack('H', int(send_map['B5'][1]))))  # y坐标 (小端)
+    data.extend(bytearray(struct.pack('H', int(send_map['B5'][0]))))  # x坐标 (小端)
+    data.extend(bytearray(struct.pack('H', int(send_map['B5'][1]))))  # y坐标 (小端)
 
-        data.extend(bytearray(struct.pack('H', int(send_map['B7'][0]))))  # x坐标 (小端)
-        data.extend(bytearray(struct.pack('H', int(send_map['B7'][1]))))  # y坐标 (小端)
-    else:
-        data = bytearray()
-        data.extend(bytearray(struct.pack('H', int(send_map['R1'][0]))))  # x坐标 (小端)
-        data.extend(bytearray(struct.pack('H', int(send_map['R1'][1]))))  # y坐标 (小端)
+    data.extend(bytearray(struct.pack('H', int(send_map['B6'][0]))))  # x坐标 (小端)
+    data.extend(bytearray(struct.pack('H', int(send_map['B6'][1]))))  # y坐标 (小端)
 
-        data.extend(bytearray(struct.pack('H', int(send_map['R2'][0]))))  # x坐标 (小端)
-        data.extend(bytearray(struct.pack('H', int(send_map['R2'][1]))))  # y坐标 (小端)
+    data.extend(bytearray(struct.pack('H', int(send_map['B7'][0]))))  # x坐标 (小端)
+    data.extend(bytearray(struct.pack('H', int(send_map['B7'][1]))))  # y坐标 (小端)
 
-        data.extend(bytearray(struct.pack('H', int(send_map['R3'][0]))))  # x坐标 (小端)
-        data.extend(bytearray(struct.pack('H', int(send_map['R3'][1]))))  # y坐标 (小端)
+    data.extend(bytearray(struct.pack('H', int(send_map['R1'][0]))))  # x坐标 (小端)
+    data.extend(bytearray(struct.pack('H', int(send_map['R1'][1]))))  # y坐标 (小端)
 
-        data.extend(bytearray(struct.pack('H', int(send_map['R4'][0]))))  # x坐标 (小端)
-        data.extend(bytearray(struct.pack('H', int(send_map['R4'][1]))))  # y坐标 (小端)
+    data.extend(bytearray(struct.pack('H', int(send_map['R2'][0]))))  # x坐标 (小端)
+    data.extend(bytearray(struct.pack('H', int(send_map['R2'][1]))))  # y坐标 (小端)
 
-        data.extend(bytearray(struct.pack('H', int(send_map['R5'][0]))))  # x坐标 (小端)
-        data.extend(bytearray(struct.pack('H', int(send_map['R5'][1]))))  # y坐标 (小端)
+    data.extend(bytearray(struct.pack('H', int(send_map['R3'][0]))))  # x坐标 (小端)
+    data.extend(bytearray(struct.pack('H', int(send_map['R3'][1]))))  # y坐标 (小端)
 
-        data.extend(bytearray(struct.pack('H', int(send_map['R7'][0]))))  # x坐标 (小端)
-        data.extend(bytearray(struct.pack('H', int(send_map['R7'][1]))))  # y坐标 (小端)
+    data.extend(bytearray(struct.pack('H', int(send_map['R4'][0]))))  # x坐标 (小端)
+    data.extend(bytearray(struct.pack('H', int(send_map['R4'][1]))))  # y坐标 (小端)
+
+    data.extend(bytearray(struct.pack('H', int(send_map['R5'][0]))))  # x坐标 (小端)
+    data.extend(bytearray(struct.pack('H', int(send_map['R5'][1]))))  # y坐标 (小端)
+
+    data.extend(bytearray(struct.pack('H', int(send_map['R6'][0]))))  # x坐标 (小端)
+    data.extend(bytearray(struct.pack('H', int(send_map['R6'][1]))))  # y坐标 (小端)
+
+    data.extend(bytearray(struct.pack('H', int(send_map['R7'][0]))))  # x坐标 (小端)
+    data.extend(bytearray(struct.pack('H', int(send_map['R7'][1]))))  # y坐标 (小端)
 
     return data
 
@@ -236,7 +240,7 @@ def receive_packet(serial_data, expected_cmd_id, info):
 
     # 计算CRC16并与接收到的CRC16进行比较
     calculated_crc16 = Get_CRC16_Check_Sum(header + cmd_id_bytes + data,
-                                           FRAME_HEADER_LEN + 2 + data_length + FRAME_TAIL_LEN)
+                                           FRAME_HEADER_LEN + 2 + data_length)
     received_crc16 = int.from_bytes(frame_tail_bytes, byteorder='little')
     if calculated_crc16 != received_crc16:
         if info:

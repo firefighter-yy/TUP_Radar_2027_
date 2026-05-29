@@ -790,15 +790,17 @@ def ser_receive():
                 if progress_result is not None:
                     received_cmd_id1, received_data1, received_seq1 = progress_result
                     # vulnerability = received_data1[0]
-                    vulnerability = [((received_data1[0] >> i) & 0x01) * 120 for i in range(5)]
+                    mark = int.from_bytes(received_data1, 'little')  # 合并两个字节
+                    opponent_bits = [((mark >> i) & 1) * 120 for i in range(6)]  # 英雄、工程、3号、4号、空中、哨兵
+                    ally_bits = [((mark >> (i+6)) & 1) * 120 for i in range(6)]
                     if state == 'R':
-                        guess_value_now['B1'] = vulnerability[0]
-                        guess_value_now['B2'] = vulnerability[1]
-                        guess_value_now['B7'] = vulnerability[4]
+                        guess_value_now['B1'] = opponent_bits[0]
+                        guess_value_now['B2'] = opponent_bits[1]
+                        guess_value_now['B7'] = opponent_bits[4]
                     else:
-                        guess_value_now['R1'] = vulnerability[0]
-                        guess_value_now['R2'] = vulnerability[1]
-                        guess_value_now['R7'] = vulnerability[4]
+                        guess_value_now['R1'] = ally_bits[0]
+                        guess_value_now['R2'] = ally_bits[1]
+                        guess_value_now['R7'] = ally_bits[4]
                 if vulnerability_result is not None:
                     received_cmd_id2, received_data2, received_seq2 = vulnerability_result
                     received_data2 = list(received_data2)[0]
